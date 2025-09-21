@@ -753,11 +753,11 @@ export const MediaShowcase = React.memo(({
       await onSubtractCredits(item.credits);
 
       // Create gift notification for the creator
-      await createNotification('gift', ' Novo presente!', ${item.name} foi presenteado para você!, item.credits);
+      await createNotification('gift', '🎁 Novo presente!', `${item.name} foi presenteado para você!`, item.credits);
 
       toast({
         title: 'Presente enviado!',
-        description:   foi presenteado com sucesso!
+        description: `${item.name} foi presenteado com sucesso!`
       });
     } catch (error) {
       console.error('Error sending gift:', error);
