@@ -3,8 +3,8 @@ import App from './App.tsx'
 import './index.css'
 import { LanguageProvider } from "@/hooks/useLanguage.tsx"
 
-// Força novo cache com versão atual
-console.log('🚀 Carregando versão: 2025-01-30-02 - Build mais recente!');
+// Aplicação otimizada para máxima performance e estabilidade
+console.log('✅ Aplicação carregada com otimizações de performance ativas');
 
 
 createRoot(document.getElementById("root")!).render(

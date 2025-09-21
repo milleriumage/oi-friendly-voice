@@ -33,7 +33,7 @@ export const FollowersDialog: React.FC<FollowersDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Users className="w-5 h-5" />
@@ -41,7 +41,7 @@ export const FollowersDialog: React.FC<FollowersDialogProps> = ({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="max-h-96 overflow-y-auto">
+        <div className="max-h-[400px] overflow-y-auto">
           {isLoading ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
@@ -53,7 +53,7 @@ export const FollowersDialog: React.FC<FollowersDialogProps> = ({
               <p className="text-sm text-muted-foreground">Nenhum seguidor ainda</p>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-3">
               {followers.map((follower) => {
                 // Verificar se é um usuário logado (tem user_id válido de usuário real)
                 const isLoggedUser = follower.follower_profile?.user_id && 
@@ -72,30 +72,39 @@ export const FollowersDialog: React.FC<FollowersDialogProps> = ({
                 return (
                   <div
                     key={follower.id}
-                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
+                    className="flex items-center gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors border border-muted/50"
                   >
-                    <Avatar className="w-10 h-10">
+                    <Avatar className="w-12 h-12 ring-2 ring-primary/20">
                       <AvatarImage 
                         src={follower.follower_profile?.avatar_url || undefined} 
                         alt={follower.follower_profile?.display_name || 'Usuário'} 
                       />
-                      <AvatarFallback className="bg-primary/10 text-primary">
+                      <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-semibold text-lg">
                         {(follower.follower_profile?.display_name || 'U').charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
 
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">
-                        {follower.follower_profile?.display_name || 'Usuário'}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Seguindo desde {new Date(follower.created_at).toLocaleDateString('pt-BR')}
-                      </p>
-                      {!isLoggedUser && (
-                        <p className="text-xs text-muted-foreground/70 italic">
-                          Visitante
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-base truncate">
+                          {follower.follower_profile?.display_name || 'Usuário'}
                         </p>
-                      )}
+                        {!isLoggedUser && (
+                          <span className="px-2 py-1 bg-muted text-xs rounded-full text-muted-foreground">
+                            Visitante
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Seguindo desde {new Date(follower.created_at).toLocaleDateString('pt-BR', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric'
+                        })}
+                      </p>
+                      <p className="text-xs text-muted-foreground/70">
+                        ID: {follower.follower_id.slice(0, 8)}...
+                      </p>
                     </div>
 
                     {/* Só mostra botão Ver Perfil conforme as condições */}

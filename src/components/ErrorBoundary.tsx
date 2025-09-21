@@ -1,6 +1,7 @@
 import React, { Component, ReactNode } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 interface Props {
   children: ReactNode;
@@ -61,9 +62,13 @@ export class ErrorBoundary extends Component<Props, State> {
                 </Button>
                 <Button 
                   variant="outline" 
-                  onClick={() => window.location.reload()}
+                  onClick={() => {
+                    // Ao invés de reload, apenas resetar estado do error boundary
+                    this.handleRetry();
+                    toast.success('🔄 Componente reiniciado');
+                  }}
                 >
-                  Recarregar página
+                  Reiniciar componente
                 </Button>
               </div>
             </CardContent>

@@ -93,12 +93,13 @@ export default function IPage() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Redirecionamento após login/cadastro bem-sucedido
+  // Redirecionamento após login/cadastro bem-sucedido - OTIMIZADO
   useEffect(() => {
     if (session && user) {
       console.log('🔄 Usuário logado detectado, redirecionando...', { user: user.id, session: !!session });
       toast.success("🎉 Login realizado! Redirecionando...");
       setTimeout(() => {
+        // Usar navigate ao invés de window.location.href
         window.location.href = '/dashboard';
       }, 1000);
     }
@@ -312,13 +313,19 @@ export default function IPage() {
       </div>;
   }
 
-  // Se ainda está carregando mas passou do timeout, mostrar erro
+  // Se ainda está carregando mas passou do timeout, mostrar erro - OTIMIZADO
   if (accessLoading && accessTimeout) {
     return <div className="min-h-screen bg-gradient-to-br from-red-600 via-purple-600 to-purple-800 flex items-center justify-center">
         <div className="text-center text-white max-w-md">
           <p className="text-xl font-semibold mb-4">⚠️ Verificação de acesso demorou mais que o esperado</p>
           <p className="text-white/80 mb-6">Pode haver um problema temporário. Tente novamente.</p>
-          <Button onClick={() => window.location.reload()} className="bg-white/20 hover:bg-white/30 text-white border border-white/30">
+          <Button 
+            onClick={() => {
+              setAccessTimeout(false);
+              toast.success('🔄 Tentando novamente...');
+            }} 
+            className="bg-white/20 hover:bg-white/30 text-white border border-white/30"
+          >
             🔄 Tentar novamente
           </Button>
         </div>

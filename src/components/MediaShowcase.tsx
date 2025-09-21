@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+﻿import React, { useRef, useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -30,6 +30,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { GetCreditsNotification } from "./GetCreditsNotification";
 import { GiftViewDialog } from "./GiftViewDialog";
 import { useWishlist } from "@/hooks/useWishlist";
+import { useCreatorWishlist } from "@/hooks/useCreatorWishlist";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useFollowers } from "@/hooks/useFollowers";
@@ -152,7 +153,7 @@ export const MediaShowcase = React.memo(({
   const [confirmInput, setConfirmInput] = useState('');
   const [hoveredItems, setHoveredItems] = useState<Set<string>>(new Set());
   const [minimizedMessageConfig, setMinimizedMessageConfig] = useState({
-    text: "Vitrine minimizada - clique no botão ˄ para expandir",
+    text: "Vitrine minimizada - clique no botÃ£o Ë„ para expandir",
     textColor: "#6b7280",
     backgroundColor: "transparent",
     fontSize: 14,
@@ -181,9 +182,10 @@ export const MediaShowcase = React.memo(({
     isCreator,
     canEdit
   } = useCreatorPermissions(creatorId);
-  const {
-    wishlistItems
-  } = useWishlist();
+  // Use creator's wishlist if viewing another creator's page, otherwise use own wishlist
+  const { wishlistItems: ownWishlistItems } = useWishlist();
+  const { wishlistItems: creatorWishlistItems } = useCreatorWishlist(creatorId);
+  const wishlistItems = creatorWishlistItems.length > 0 ? creatorWishlistItems : ownWishlistItems;
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { guestData } = useGuestData();
@@ -313,17 +315,17 @@ export const MediaShowcase = React.memo(({
     }
   }, [vitrineConfig.slideshowMode, vitrineConfig.slideshowInterval, currentSlideIndex, sortedMediaItems, onSlideshowConfigChange]);
   const handleImageUpload = () => {
-    // Verificar slots disponíveis usando o hook
+    // Verificar slots disponÃ­veis usando o hook
     const currentImageCount = mediaItems.filter(item => item.type === 'image').length;
     if (!canUpload('image', currentImageCount)) {
-      createNotification('slot_needed', '🚫 Slot insuficiente!', 'Compre +1 slot premium para fazer upload de imagem', null);
+      createNotification('slot_needed', 'ðŸš« Slot insuficiente!', 'Compre +1 slot premium para fazer upload de imagem', null);
       toast({
         title: "Slot insuficiente!",
-        description: "Você pode comprar um slot premium por 50 créditos!",
+        description: "VocÃª pode comprar um slot premium por 50 crÃ©ditos!",
         variant: "destructive"
       });
 
-      // Abrir dialog de confirmação de compra
+      // Abrir dialog de confirmaÃ§Ã£o de compra
       setSlotConfirmData({
         type: 'image',
         cost: 50
@@ -338,17 +340,17 @@ export const MediaShowcase = React.memo(({
     }
   };
   const handleVideoUpload = () => {
-    // Verificar slots disponíveis usando o hook
+    // Verificar slots disponÃ­veis usando o hook
     const currentVideoCount = mediaItems.filter(item => item.type === 'video').length;
     if (!canUpload('video', currentVideoCount)) {
-      createNotification('slot_needed', '💰 Você tem créditos!', 'Compre 1 slot de vídeo por 80 créditos', null);
+      createNotification('slot_needed', 'ðŸ’° VocÃª tem crÃ©ditos!', 'Compre 1 slot de vÃ­deo por 80 crÃ©ditos', null);
       toast({
-        title: "Você tem créditos!",
-        description: "Compre 1 slot de vídeo por 80 créditos!",
+        title: "VocÃª tem crÃ©ditos!",
+        description: "Compre 1 slot de vÃ­deo por 80 crÃ©ditos!",
         variant: "destructive"
       });
 
-      // Abrir dialog de confirmação de compra
+      // Abrir dialog de confirmaÃ§Ã£o de compra
       setSlotConfirmData({
         type: 'video',
         cost: 80
@@ -368,7 +370,7 @@ export const MediaShowcase = React.memo(({
       onUploadImage(file);
       toast({
         title: "Imagem enviada!",
-        description: "📤 Sua imagem foi enviada com sucesso."
+        description: "ðŸ“¤ Sua imagem foi enviada com sucesso."
       });
     }
   };
@@ -377,8 +379,8 @@ export const MediaShowcase = React.memo(({
     if (file) {
       onUploadVideo(file);
       toast({
-        title: "Vídeo enviado!",
-        description: "🎥 Seu vídeo foi enviado com sucesso."
+        title: "VÃ­deo enviado!",
+        description: "ðŸŽ¥ Seu vÃ­deo foi enviado com sucesso."
       });
     }
   };
@@ -387,8 +389,8 @@ export const MediaShowcase = React.memo(({
     if (file && replacingMediaId) {
       onReplaceMedia(replacingMediaId, file);
       toast({
-        title: "Mídia substituída!",
-        description: `${file.type.startsWith('image/') ? '📸' : '🎥'} Mídia substituída com sucesso!`
+        title: "MÃ­dia substituÃ­da!",
+        description: `${file.type.startsWith('image/') ? 'ðŸ“¸' : 'ðŸŽ¥'} MÃ­dia substituÃ­da com sucesso!`
       });
       setReplacingMediaId(null);
     }
@@ -404,21 +406,21 @@ export const MediaShowcase = React.memo(({
     }
   };
   const toggleBlur = async (item: MediaItem) => {
-    // Verificar se tem créditos suficientes
+    // Verificar se tem crÃ©ditos suficientes
     if (credits < 20) {
       setShowGetCreditsNotification(true);
       return;
     }
     executeWithPassword(`toggle-blur-${item.id}`, async () => {
-      // Descontar créditos antes de aplicar o efeito
-      const success = await onSubtractCredits(20, "Aplicar/remover desfoque na mídia");
+      // Descontar crÃ©ditos antes de aplicar o efeito
+      const success = await onSubtractCredits(20, "Aplicar/remover desfoque na mÃ­dia");
       if (success) {
         onUpdateMedia(item.id, {
           is_blurred: !item.is_blurred
         });
         toast({
           title: item.is_blurred ? "Desfoque removido!" : "Desfoque aplicado!",
-          description: item.is_blurred ? "👁️ Sua mídia agora está visível. (-20 créditos)" : "🫥 Sua mídia foi borrada. (-20 créditos)"
+          description: item.is_blurred ? "ðŸ‘ï¸ Sua mÃ­dia agora estÃ¡ visÃ­vel. (-20 crÃ©ditos)" : "ðŸ«¥ Sua mÃ­dia foi borrada. (-20 crÃ©ditos)"
         });
         setActiveDropdown(null);
       }
@@ -427,69 +429,69 @@ export const MediaShowcase = React.memo(({
   const toggleHoverUnblur = async (item: MediaItem) => {
     if (!item.is_blurred) {
       toast({
-        title: "Ação indisponível",
-        description: "Esta opção só funciona quando a mídia está desfocada.",
+        title: "AÃ§Ã£o indisponÃ­vel",
+        description: "Esta opÃ§Ã£o sÃ³ funciona quando a mÃ­dia estÃ¡ desfocada.",
         variant: "destructive"
       });
       return;
     }
 
-    // Verificar se tem créditos suficientes
+    // Verificar se tem crÃ©ditos suficientes
     if (credits < 20) {
       setShowGetCreditsNotification(true);
       return;
     }
     executeWithPassword(`toggle-hover-unblur-${item.id}`, async () => {
-      // Descontar créditos antes de aplicar o efeito
-      const success = await onSubtractCredits(20, "Configurar hover desfoque na mídia");
+      // Descontar crÃ©ditos antes de aplicar o efeito
+      const success = await onSubtractCredits(20, "Configurar hover desfoque na mÃ­dia");
       if (success) {
         onUpdateMedia(item.id, {
           hover_unblur: !item.hover_unblur
         });
         toast({
           title: item.hover_unblur ? "Clique desfoque desativado!" : "Clique desfoque ativado!",
-          description: item.hover_unblur ? "👆 Hover não remove mais o desfoque. (-20 créditos)" : "👆 Hover agora remove o desfoque temporariamente. (-20 créditos)"
+          description: item.hover_unblur ? "ðŸ‘† Hover nÃ£o remove mais o desfoque. (-20 crÃ©ditos)" : "ðŸ‘† Hover agora remove o desfoque temporariamente. (-20 crÃ©ditos)"
         });
         setActiveDropdown(null);
       }
     });
   };
   const handleSetPrice = async (item: MediaItem) => {
-    // Verificar se tem créditos suficientes
+    // Verificar se tem crÃ©ditos suficientes
     if (credits < 20) {
       setShowGetCreditsNotification(true);
       return;
     }
     executeWithPassword(`set-price-${item.id}`, async () => {
-      // Descontar créditos antes de abrir o diálogo
-      const success = await onSubtractCredits(20, "Definir preço da mídia");
+      // Descontar crÃ©ditos antes de abrir o diÃ¡logo
+      const success = await onSubtractCredits(20, "Definir preÃ§o da mÃ­dia");
       if (success) {
         setSelectedMediaId(item.id);
         setShowPriceDialog(true);
         setActiveDropdown(null);
         toast({
           title: "Ferramenta desbloqueada!",
-          description: "💎 Você pode agora definir o preço desta mídia. (-20 créditos)"
+          description: "ðŸ’Ž VocÃª pode agora definir o preÃ§o desta mÃ­dia. (-20 crÃ©ditos)"
         });
       }
     });
   };
   const handleSetLink = async (item: MediaItem) => {
-    // Verificar se tem créditos suficientes
+    // Verificar se tem crÃ©ditos suficientes
     if (credits < 20) {
       setShowGetCreditsNotification(true);
       return;
     }
     executeWithPassword(`set-link-${item.id}`, async () => {
-      // Descontar créditos antes de abrir o diálogo
-      const success = await onSubtractCredits(20, "Definir link da mídia");
+      // Descontar crÃ©ditos antes de abrir o diÃ¡logo
+      const success = await onSubtractCredits(20, "Definir link da mÃ­dia");
       if (success) {
         setSelectedMediaId(item.id);
         setShowLinkDialog(true);
         setActiveDropdown(null);
         toast({
           title: "Ferramenta desbloqueada!",
-          description: "💎 Você pode agora definir o link desta mídia. (-20 créditos)"
+          description: "ðŸ’Ž VocÃª pode agora definir o link desta mÃ­dia. (-20 crÃ©ditos)"
         });
       }
     });
@@ -501,53 +503,53 @@ export const MediaShowcase = React.memo(({
     });
   };
   const handleSetTimer = async (item: MediaItem) => {
-    // Verificar se tem créditos suficientes
+    // Verificar se tem crÃ©ditos suficientes
     if (credits < 20) {
       setShowGetCreditsNotification(true);
       return;
     }
     executeWithPassword(`set-timer-${item.id}`, async () => {
-      // Descontar créditos antes de abrir o diálogo
-      const success = await onSubtractCredits(20, "Configurar timer da mídia");
+      // Descontar crÃ©ditos antes de abrir o diÃ¡logo
+      const success = await onSubtractCredits(20, "Configurar timer da mÃ­dia");
       if (success) {
         setSelectedMediaId(item.id);
         setShowTimerDialog(true);
         setActiveDropdown(null);
         toast({
           title: "Ferramenta desbloqueada!",
-          description: "💎 Você pode agora configurar timer desta mídia. (-20 créditos)"
+          description: "ðŸ’Ž VocÃª pode agora configurar timer desta mÃ­dia. (-20 crÃ©ditos)"
         });
       }
     });
   };
   const handleSetAutoDelete = async (item: MediaItem) => {
-    // Verificar se tem créditos suficientes
+    // Verificar se tem crÃ©ditos suficientes
     if (credits < 20) {
       setShowGetCreditsNotification(true);
       return;
     }
     executeWithPassword(`auto-delete-${item.id}`, async () => {
-      // Descontar créditos antes de abrir o diálogo
-      const success = await onSubtractCredits(20, "Configurar auto-delete da mídia");
+      // Descontar crÃ©ditos antes de abrir o diÃ¡logo
+      const success = await onSubtractCredits(20, "Configurar auto-delete da mÃ­dia");
       if (success) {
         setSelectedMediaId(item.id);
         setShowAutoDeleteDialog(true);
         setActiveDropdown(null);
         toast({
           title: "Ferramenta desbloqueada!",
-          description: "💎 Você pode agora configurar auto-delete. (-20 créditos)"
+          description: "ðŸ’Ž VocÃª pode agora configurar auto-delete. (-20 crÃ©ditos)"
         });
       }
     });
   };
   const handleVitrineSlideToggle = async (item: MediaItem) => {
-    // Verificar se tem créditos suficientes
+    // Verificar se tem crÃ©ditos suficientes
     if (credits < 20) {
       setShowGetCreditsNotification(true);
       return;
     }
     executeWithPassword(`vitrine-slide-${item.id}`, async () => {
-      // Descontar créditos antes de ativar
+      // Descontar crÃ©ditos antes de ativar
       const success = await onSubtractCredits(20, "Ativar/desativar slide vitrine");
       if (success) {
         setVitrineSlideMode(prev => {
@@ -560,65 +562,65 @@ export const MediaShowcase = React.memo(({
         setActiveDropdown(null);
         toast({
           title: !vitrineSlideMode ? "Slide Vitrine Ativado!" : "Slide Vitrine Desativado!",
-          description: !vitrineSlideMode ? "As imagens da vitrine passarão automaticamente na tela principal a cada 3 segundos. (-20 créditos)" : "Slide da vitrine foi pausado. (-20 créditos)"
+          description: !vitrineSlideMode ? "As imagens da vitrine passarÃ£o automaticamente na tela principal a cada 3 segundos. (-20 crÃ©ditos)" : "Slide da vitrine foi pausado. (-20 crÃ©ditos)"
         });
       }
     });
   };
   const handleReplaceMediaClick = async (item: MediaItem) => {
-    // Verificar se tem créditos suficientes
+    // Verificar se tem crÃ©ditos suficientes
     if (credits < 20) {
       setShowGetCreditsNotification(true);
       return;
     }
     executeWithPassword(`replace-${item.id}`, async () => {
-      // Descontar créditos antes de permitir troca
-      const success = await onSubtractCredits(20, "Trocar mídia");
+      // Descontar crÃ©ditos antes de permitir troca
+      const success = await onSubtractCredits(20, "Trocar mÃ­dia");
       if (success) {
         setReplacingMediaId(item.id);
         replaceInputRef.current?.click();
         setActiveDropdown(null);
         toast({
           title: "Ferramenta desbloqueada!",
-          description: "💎 Você pode agora trocar esta mídia. (-20 créditos)"
+          description: "ðŸ’Ž VocÃª pode agora trocar esta mÃ­dia. (-20 crÃ©ditos)"
         });
       }
     });
   };
   const handleDelete = async (item: MediaItem) => {
-    // Verificar se tem créditos suficientes
+    // Verificar se tem crÃ©ditos suficientes
     if (credits < 20) {
       setShowGetCreditsNotification(true);
       return;
     }
     executeWithPassword(`delete-${item.id}`, async () => {
-      // Descontar créditos antes de deletar
-      const success = await onSubtractCredits(20, "Deletar mídia");
+      // Descontar crÃ©ditos antes de deletar
+      const success = await onSubtractCredits(20, "Deletar mÃ­dia");
       if (success) {
         onDeleteMedia(item.id);
         removeTimer(item.id);
         toast({
-          title: "Mídia deletada!",
-          description: "🗑️ Sua mídia foi removida com sucesso. (-20 créditos)"
+          title: "MÃ­dia deletada!",
+          description: "ðŸ—‘ï¸ Sua mÃ­dia foi removida com sucesso. (-20 crÃ©ditos)"
         });
         setActiveDropdown(null);
       }
     });
   };
   const handleSetAsMain = async (item: MediaItem) => {
-    // Verificar se tem créditos suficientes
+    // Verificar se tem crÃ©ditos suficientes
     if (credits < 20) {
       setShowGetCreditsNotification(true);
       return;
     }
     executeWithPassword(`set-main-${item.id}`, async () => {
-      // Descontar créditos antes de aplicar
-      const success = await onSubtractCredits(20, "Definir mídia como principal");
+      // Descontar crÃ©ditos antes de aplicar
+      const success = await onSubtractCredits(20, "Definir mÃ­dia como principal");
       if (success) {
         onSetAsMain(item.id);
         toast({
           title: "Definida como principal!",
-          description: "⭐ Esta mídia é agora a principal. (-20 créditos)"
+          description: "â­ Esta mÃ­dia Ã© agora a principal. (-20 crÃ©ditos)"
         });
         setActiveDropdown(null);
       }
@@ -644,7 +646,7 @@ export const MediaShowcase = React.memo(({
       setPinnedItems(newPinnedItems);
       toast({
         title: isPinned ? "Desafixada da vitrine!" : "Fixada na vitrine!",
-        description: isPinned ? "📌 Mídia desafixada da vitrine." : "📌 Mídia fixada da vitrine."
+        description: isPinned ? "ðŸ“Œ MÃ­dia desafixada da vitrine." : "ðŸ“Œ MÃ­dia fixada da vitrine."
       });
       setActiveDropdown(null);
     });
@@ -659,7 +661,7 @@ export const MediaShowcase = React.memo(({
         await recordInteraction(item.id, 'click');
         toast({
           title: "Imagem Selecionada",
-          description: "Esta imagem agora está sendo exibida na tela principal"
+          description: "Esta imagem agora estÃ¡ sendo exibida na tela principal"
         });
       }
       return;
@@ -704,47 +706,80 @@ export const MediaShowcase = React.memo(({
 
       // Create notification for the like
       const mediaItem = mediaItems.find(item => item.id === itemId);
-      const mediaType = mediaItem?.type === 'image' ? 'imagem' : 'vídeo';
-      await createNotification('like', '❤️ Nova curtida!', `Alguém curtiu sua ${mediaType}`, null);
+      const mediaType = mediaItem?.type === 'image' ? 'imagem' : 'vÃ­deo';
+      await createNotification('like', 'â¤ï¸ Nova curtida!', `AlguÃ©m curtiu sua ${mediaType}`, null);
 
       // Check if user earned credits from likes (every 10 likes = 1 credit)
       if (newTotalLikes % 10 === 0) {
         onAddCredits(1);
-        await createNotification('credit_earned', '🎉 Crédito ganho!', 'Você ganhou 1 crédito por receber 10 curtidas!', 1);
+        await createNotification('credit_earned', 'ðŸŽ‰ CrÃ©dito ganho!', 'VocÃª ganhou 1 crÃ©dito por receber 10 curtidas!', 1);
         toast({
-          title: "Crédito ganho!",
-          description: "🎉 Você ganhou 1 crédito por 10 curtidas!"
+          title: "CrÃ©dito ganho!",
+          description: "ðŸŽ‰ VocÃª ganhou 1 crÃ©dito por 10 curtidas!"
         });
       } else {
         const likesNeeded = 10 - newTotalLikes % 10;
-        await createNotification('progress', '📈 Progresso de curtidas', `Receba mais ${likesNeeded} curtida${likesNeeded > 1 ? 's' : ''} para ter 1 crédito creditado na sua conta`, null);
+        await createNotification('progress', 'ðŸ“ˆ Progresso de curtidas', `Receba mais ${likesNeeded} curtida${likesNeeded > 1 ? 's' : ''} para ter 1 crÃ©dito creditado na sua conta`, null);
       }
       toast({
         title: "Curtida adicionada!",
-        description: "❤️ Obrigado pelo seu apoio!"
+        description: "â¤ï¸ Obrigado pelo seu apoio!"
       });
     } else {
       newLikedItems.delete(itemId);
       setTotalLikes(Math.max(0, totalLikes - 1));
       toast({
         title: "Curtida removida!",
-        description: "💔 A curtida foi desfeita."
+        description: "ðŸ’” A curtida foi desfeita."
       });
     }
     setLikedItems(newLikedItems);
+  };
+
+  // Handle gift item functionality
+  const handleGiftItem = async (item: WishlistItem) => {
+    try {
+      // Check if user has enough credits
+      if (credits < item.credits) {
+        toast({
+          title: 'Créditos insuficientes',
+          description: Você precisa de  créditos a mais,
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      // Deduct credits
+      await onSubtractCredits(item.credits);
+
+      // Create gift notification for the creator
+      await createNotification('gift', ' Novo presente!', ${item.name} foi presenteado para você!, item.credits);
+
+      toast({
+        title: 'Presente enviado!',
+        description:   foi presenteado com sucesso!
+      });
+    } catch (error) {
+      console.error('Error sending gift:', error);
+      toast({
+        title: 'Erro ao enviar presente',
+        description: 'Tente novamente mais tarde',
+        variant: 'destructive'
+      });
+    }
   };
   const handleShare = async (platform: string, item: MediaItem) => {
     // Record share interaction in database
     await recordInteraction(item.id, 'share');
     const shareUrl = window.location.origin;
-    const shareText = `Confira esta ${item.type === 'image' ? 'imagem' : 'vídeo'}!`;
+    const shareText = `Confira esta ${item.type === 'image' ? 'imagem' : 'vÃ­deo'}!`;
 
     // Increment shares counter
     const newTotalShares = totalShares + 1;
     setTotalShares(newTotalShares);
 
     // Share notification without credit rewards
-    await createNotification('share', '📤 Compartilhamento realizado!', `${item.type === 'image' ? 'Imagem' : 'Vídeo'} compartilhado com sucesso!`, null);
+    await createNotification('share', 'ðŸ“¤ Compartilhamento realizado!', `${item.type === 'image' ? 'Imagem' : 'VÃ­deo'} compartilhado com sucesso!`, null);
 
     // Enhanced sharing URLs with better platform support
     const shareUrls: Record<string, (url: string) => string> = {
@@ -773,7 +808,7 @@ export const MediaShowcase = React.memo(({
         console.error('Failed to copy to clipboard:', err);
         toast({
           title: "Erro ao copiar",
-          description: "Não foi possível copiar o link.",
+          description: "NÃ£o foi possÃ­vel copiar o link.",
           variant: "destructive"
         });
       }
@@ -787,7 +822,7 @@ export const MediaShowcase = React.memo(({
   const handleNextCreator = async () => {
     setIsLoadingNextCreator(true);
     try {
-      // Buscar todos os criadores com perfis públicos (que têm mídias ou dados configurados)
+      // Buscar todos os criadores com perfis pÃºblicos (que tÃªm mÃ­dias ou dados configurados)
       const {
         data: creators,
         error
@@ -797,30 +832,30 @@ export const MediaShowcase = React.memo(({
       if (error) {
         console.error('Erro ao buscar criadores:', error);
         toast({
-          title: "❌ Erro ao buscar próximo criador",
+          title: "âŒ Erro ao buscar prÃ³ximo criador",
           variant: "destructive"
         });
         return;
       }
       if (!creators || creators.length === 0) {
         toast({
-          title: "🔍 Nenhum outro criador encontrado"
+          title: "ðŸ” Nenhum outro criador encontrado"
         });
         return;
       }
 
-      // Selecionar um criador aleatório
+      // Selecionar um criador aleatÃ³rio
       const randomCreator = creators[Math.floor(Math.random() * creators.length)];
 
-      // Navegar para a página do criador
+      // Navegar para a pÃ¡gina do criador
       navigate(`/user/${randomCreator.user_id}`);
       toast({
-        title: `🔀 Navegando para ${randomCreator.display_name || 'criador'}!`
+        title: `ðŸ”€ Navegando para ${randomCreator.display_name || 'criador'}!`
       });
     } catch (error) {
-      console.error('Erro ao buscar próximo criador:', error);
+      console.error('Erro ao buscar prÃ³ximo criador:', error);
       toast({
-        title: "❌ Erro inesperado",
+        title: "âŒ Erro inesperado",
         variant: "destructive"
       });
     } finally {
@@ -835,7 +870,7 @@ export const MediaShowcase = React.memo(({
         {/* Center - Statistics */}
         <div className="flex-1 flex items-center justify-center">
           <div className="flex items-center gap-8">
-            {/* Seguindo - apenas para o próprio criador */}
+            {/* Seguindo - apenas para o prÃ³prio criador */}
             {isCreator && (
               <div className="flex flex-col items-center cursor-pointer" onClick={async () => {
                 setFollowingDialogOpen(true);
@@ -848,7 +883,7 @@ export const MediaShowcase = React.memo(({
               </div>
             )}
             
-            {/* Seguidores - sempre visível */}
+            {/* Seguidores - sempre visÃ­vel */}
             <div className="flex flex-col items-center cursor-pointer" onClick={async () => {
               setDialogOpen(true);
               await loadFollowers();
@@ -857,7 +892,7 @@ export const MediaShowcase = React.memo(({
               <span className="text-sm text-muted-foreground">Seguidores</span>
             </div>
             
-            {/* Curtidas - sempre visível */}
+            {/* Curtidas - sempre visÃ­vel */}
             <div className="flex flex-col items-center">
               <span className="text-lg font-bold text-foreground">{mediaLikesTotal}</span>
               <span className="text-sm text-muted-foreground">Curtidas</span>
@@ -873,7 +908,7 @@ export const MediaShowcase = React.memo(({
             size="sm" 
             variant="ghost" 
             className="h-10 w-10 p-0 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 backdrop-blur-sm border border-white/20 transition-all duration-300 hover:scale-110 shadow-lg hover:shadow-xl" 
-            title="Próximo Criador"
+            title="PrÃ³ximo Criador"
           >
             <Shuffle className="w-4 h-4 text-blue-600" />
           </Button>
@@ -903,7 +938,7 @@ export const MediaShowcase = React.memo(({
               variant="default"
               className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-medium"
             >
-              Assinar Conteúdo
+              Assinar ConteÃºdo
             </Button>
           </div>
           <div className="flex items-center gap-3">
@@ -927,7 +962,7 @@ export const MediaShowcase = React.memo(({
                   <ImageIcon className="w-4 h-4 text-green-600" />
                    <div className="flex flex-col">
                      <span className="font-medium text-green-700">{t('mediaShowcase.getImageSlot')}</span>
-                     <span className="text-xs text-green-600">50 créditos - Desbloqueio imediato</span>
+                     <span className="text-xs text-green-600">50 crÃ©ditos - Desbloqueio imediato</span>
                    </div>
                 </DropdownMenuItem>
                  <DropdownMenuItem onClick={() => {
@@ -941,7 +976,7 @@ export const MediaShowcase = React.memo(({
                   <Video className="w-4 h-4 text-purple-600" />
                    <div className="flex flex-col">
                      <span className="font-medium text-purple-700">{t('mediaShowcase.getVideoSlot')}</span>
-                     <span className="text-xs text-purple-600">80 créditos - Desbloqueio imediato</span>
+                     <span className="text-xs text-purple-600">80 crÃ©ditos - Desbloqueio imediato</span>
                    </div>
                 </DropdownMenuItem>
                </DropdownMenuContent>
@@ -956,7 +991,7 @@ export const MediaShowcase = React.memo(({
                  <Upload className="w-4 h-4 text-primary" />
                </Button>}
               
-            {visibilitySettings?.showUploadButtons && onUploadVideo && canEdit && <Button onClick={handleVideoUpload} size="sm" variant="ghost" className="h-10 w-10 p-0 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 hover:from-primary/30 hover:to-accent/30 backdrop-blur-sm border border-white/20 transition-all duration-300 hover:scale-110 shadow-lg hover:shadow-xl" title="Upload Vídeo">
+            {visibilitySettings?.showUploadButtons && onUploadVideo && canEdit && <Button onClick={handleVideoUpload} size="sm" variant="ghost" className="h-10 w-10 p-0 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 hover:from-primary/30 hover:to-accent/30 backdrop-blur-sm border border-white/20 transition-all duration-300 hover:scale-110 shadow-lg hover:shadow-xl" title="Upload VÃ­deo">
                 <Video className="w-4 h-4 text-accent" />
               </Button>}
             
@@ -1119,14 +1154,14 @@ export const MediaShowcase = React.memo(({
                       {/* Timer Display - Top center */}
                       {timer && timer.isActive && <div className={`absolute top-2 left-1/2 transform -translate-x-1/2 z-10 ${timer.remainingSeconds <= 10 ? 'animate-pulse' : ''}`}>
                           <div className={`font-bold px-3 py-2 rounded-lg text-lg ${timer.remainingSeconds <= 10 ? 'bg-red-500/90 text-white shadow-lg' : 'bg-black/70 text-white'}`}>
-                            ⏰ {formatTime(timer.remainingSeconds)}
+                            â° {formatTime(timer.remainingSeconds)}
                           </div>
                         </div>}
 
                       {/* Auto-Delete Timer Display - Top right */}
                       {isAutoDeleteActive(item.id) && <div className="absolute top-2 right-2 z-10">
                           <div className="bg-red-600/90 text-white font-bold px-2 py-1 rounded-lg text-sm animate-pulse border border-red-400">
-                            🔥 Auto-Delete: {getTimeRemaining(item.id) ? Math.ceil(getTimeRemaining(item.id)! / 60) : 0}min
+                            ðŸ”¥ Auto-Delete: {getTimeRemaining(item.id) ? Math.ceil(getTimeRemaining(item.id)! / 60) : 0}min
                           </div>
                         </div>}
 
@@ -1148,18 +1183,18 @@ export const MediaShowcase = React.memo(({
                           color: priceConfig.textColor,
                           backgroundColor: priceConfig.isTransparent ? 'transparent' : priceConfig.backgroundColor
                         }}>
-                                      {item.is_blurred ? '🔒 ' : ''}{priceConfig.text}
+                                      {item.is_blurred ? 'ðŸ”’ ' : ''}{priceConfig.text}
                                   </div>;
                       } else {
                         // Fallback for simple text price
                         return <div className="bg-black/70 text-white font-bold px-2 py-1 rounded text-sm">
-                                    {item.is_blurred ? '🔒 ' : ''}{item.price}
+                                    {item.is_blurred ? 'ðŸ”’ ' : ''}{item.price}
                                   </div>;
                       }
                     } catch (e) {
                       // Fallback for invalid JSON
                       return <div className="bg-black/70 text-white font-bold px-2 py-1 rounded text-sm">
-                                  {item.is_blurred ? '🔒 ' : ''}{item.price}
+                                  {item.is_blurred ? 'ðŸ”’ ' : ''}{item.price}
                                 </div>;
                     }
                   })()}
@@ -1169,12 +1204,12 @@ export const MediaShowcase = React.memo(({
                       <div className="absolute bottom-2 left-2 flex flex-col gap-1">
                         {/* Main indicator */}
                         {item.is_main && <div className="bg-yellow-500 text-black px-2 py-1 rounded text-xs font-bold">
-                            ⭐ Principal
+                            â­ Principal
                           </div>}
                         
                         {/* Pinned in vitrine indicator */}
                         {pinnedItems.has(item.id) && <div className="text-purple-500">
-                             📌
+                             ðŸ“Œ
                            </div>}
                         
                          
@@ -1264,13 +1299,13 @@ export const MediaShowcase = React.memo(({
                                   </DropdownMenuItem>}
                                
                                 {onEditMedia && <DropdownMenuItem onClick={async () => {
-                        // Verificar se tem créditos suficientes
+                        // Verificar se tem crÃ©ditos suficientes
                         if (credits < 20) {
                           setShowGetCreditsNotification(true);
                           return;
                         }
 
-                        // Descontar créditos antes de abrir configuração
+                        // Descontar crÃ©ditos antes de abrir configuraÃ§Ã£o
                         const success = await onSubtractCredits(20, "Configurar slideshow da vitrine");
                         if (success) {
                           if (passwordProtected) {
@@ -1282,7 +1317,7 @@ export const MediaShowcase = React.memo(({
                           }
                           toast({
                             title: "Ferramenta desbloqueada!",
-                            description: "💎 Você pode agora configurar slideshow. (-20 créditos)"
+                            description: "ðŸ’Ž VocÃª pode agora configurar slideshow. (-20 crÃ©ditos)"
                           });
                         }
                       }}>
@@ -1291,20 +1326,20 @@ export const MediaShowcase = React.memo(({
                                   </DropdownMenuItem>}
                                
                                 {timer && onEditMedia && <DropdownMenuItem onClick={async () => {
-                        // Verificar se tem créditos suficientes
+                        // Verificar se tem crÃ©ditos suficientes
                         if (credits < 20) {
                           setShowGetCreditsNotification(true);
                           return;
                         }
 
-                        // Descontar créditos antes de resetar
-                        const success = await onSubtractCredits(20, "Resetar timer da mídia");
+                        // Descontar crÃ©ditos antes de resetar
+                        const success = await onSubtractCredits(20, "Resetar timer da mÃ­dia");
                         if (success) {
                           resetTimer(item.id);
                           setActiveDropdown(null);
                           toast({
                             title: "Timer resetado!",
-                            description: "🔄 Timer da mídia foi resetado. (-20 créditos)"
+                            description: "ðŸ”„ Timer da mÃ­dia foi resetado. (-20 crÃ©ditos)"
                           });
                         }
                       }}>
@@ -1329,8 +1364,8 @@ export const MediaShowcase = React.memo(({
 
         {/* Empty state or minimized message */}
         {sortedMediaItems.length === 0 && !isMinimized && <div className="text-center py-8 text-muted-foreground">
-            <p className="mb-2">Nenhuma mídia adicionada ainda</p>
-            <p className="text-sm">Use os botões acima para adicionar fotos e vídeos</p>
+            <p className="mb-2">Nenhuma mÃ­dia adicionada ainda</p>
+            <p className="text-sm">Use os botÃµes acima para adicionar fotos e vÃ­deos</p>
           </div>}
         
         {isMinimized && <div className="flex items-center justify-center gap-2 py-2">
@@ -1417,27 +1452,27 @@ export const MediaShowcase = React.memo(({
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Deseja descontar {slotConfirmData?.cost} créditos para desbloquear +1 slot VIP para upload de {slotConfirmData?.type === 'image' ? 'imagem' : 'vídeo'}? 
-              Esta ação não pode ser desfeita.
+              Deseja descontar {slotConfirmData?.cost} crÃ©ditos para desbloquear +1 slot VIP para upload de {slotConfirmData?.type === 'image' ? 'imagem' : 'vÃ­deo'}? 
+              Esta aÃ§Ã£o nÃ£o pode ser desfeita.
             </p>
             <div className="flex gap-3 justify-center">
               <Button variant="outline" onClick={() => {
               setShowSlotConfirmDialog(false);
               setSlotConfirmData(null);
             }} className="flex-1">
-                Não
+                NÃ£o
               </Button>
               <Button onClick={async () => {
               if (slotConfirmData) {
-                console.log(`[SLOT PURCHASE] Iniciando compra de slot ${slotConfirmData.type} por ${slotConfirmData.cost} créditos`);
-                console.log(`[SLOT PURCHASE] Créditos atuais: ${credits}`);
+                console.log(`[SLOT PURCHASE] Iniciando compra de slot ${slotConfirmData.type} por ${slotConfirmData.cost} crÃ©ditos`);
+                console.log(`[SLOT PURCHASE] CrÃ©ditos atuais: ${credits}`);
                 const success = await purchaseSlot(slotConfirmData.type, onSubtractCredits);
                 if (success) {
                   console.log(`[SLOT PURCHASE] Compra finalizada com sucesso.`);
                   setShowSlotConfirmDialog(false);
                   setSlotConfirmData(null);
                 } else {
-                  console.log(`[SLOT PURCHASE] Falha na compra - créditos insuficientes`);
+                  console.log(`[SLOT PURCHASE] Falha na compra - crÃ©ditos insuficientes`);
                 }
               }
             }} className="flex-1">
@@ -1456,25 +1491,33 @@ export const MediaShowcase = React.memo(({
       {/* Get Credits Notification */}
       {showGetCreditsNotification && <GetCreditsNotification onClose={() => setShowGetCreditsNotification(false)} onGetCredits={() => {
       setShowGetCreditsNotification(false);
-      // Aqui você pode abrir um diálogo de compra de créditos ou redirecionar
+      // Aqui vocÃª pode abrir um diÃ¡logo de compra de crÃ©ditos ou redirecionar
       toast({
-        title: "💎 Comprar Créditos",
-        description: "Redirecionando para a página de compra de créditos..."
+        title: "ðŸ’Ž Comprar CrÃ©ditos",
+        description: "Redirecionando para a pÃ¡gina de compra de crÃ©ditos..."
       });
     }} />}
 
       {/* Gallery Dialog */}
-      <GiftViewDialog open={showGiftGallery} onOpenChange={setShowGiftGallery} items={wishlistItems} />
+      <GiftViewDialog 
+        open={showGiftGallery} 
+        onOpenChange={setShowGiftGallery} 
+        items={wishlistItems} 
+        userCredits={credits} 
+        isLoggedIn={isLoggedIn} 
+        onGiftItem={handleGiftItem} 
+        onAddCredits={() => setShowAddCreditsDialog(true)} 
+      />
 
       {/* Premium Plans Dialog */}
       <Dialog open={showPremiumDialog} onOpenChange={setShowPremiumDialog}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>✨ Assinar Conteúdo Premium</DialogTitle>
+            <DialogTitle>âœ¨ Assinar ConteÃºdo Premium</DialogTitle>
           </DialogHeader>
           <div className="p-4 text-center">
             <p className="text-muted-foreground mb-4">
-              Funcionalidade de assinatura será implementada em breve!
+              Funcionalidade de assinatura serÃ¡ implementada em breve!
             </p>
             <Button onClick={() => setShowPremiumDialog(false)}>
               Fechar
@@ -1503,3 +1546,6 @@ export const MediaShowcase = React.memo(({
       <MediaLikesLoader mediaItems={mediaItems} />
     </div>;
 });
+
+
+

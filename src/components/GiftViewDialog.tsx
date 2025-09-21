@@ -1,8 +1,9 @@
-import React from 'react';
+﻿import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Star, Gift, Eye, X, Sparkles } from "lucide-react";
+import { GiftConfirmationDialog } from "./GiftConfirmationDialog";
 import { WishlistItem } from "@/hooks/useWishlist";
 
 interface GiftViewDialogProps {
@@ -11,9 +12,15 @@ interface GiftViewDialogProps {
   onOpenChange: (open: boolean) => void;
   onItemClick?: (item: WishlistItem) => void;
   disableAnimations?: boolean;
+  userCredits?: number;
+  isLoggedIn?: boolean;
+  onGiftItem?: (item: WishlistItem) => void;
+  onAddCredits?: () => void;
 }
 
-export function GiftViewDialog({ items, open, onOpenChange, onItemClick, disableAnimations = false }: GiftViewDialogProps) {
+export function GiftViewDialog({ items, open, onOpenChange, onItemClick, disableAnimations = false, userCredits = 0, isLoggedIn = false, onGiftItem, onAddCredits }: GiftViewDialogProps) {
+  const [selectedItem, setSelectedItem] = useState<WishlistItem | null>(null);
+  const [showGiftConfirmation, setShowGiftConfirmation] = useState(false);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto bg-gradient-to-br from-primary/10 via-accent/10 to-secondary/30 backdrop-blur-xl border border-primary/30 shadow-2xl animate-fade-in"
@@ -27,7 +34,7 @@ export function GiftViewDialog({ items, open, onOpenChange, onItemClick, disable
               <div className="p-2 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 backdrop-blur-sm border border-primary/30 animate-pulse">
                 <Eye className="w-6 h-6 text-primary" />
               </div>
-              🎁 Galeria de Presentes
+              ðŸŽ Galeria de Presentes
             </DialogTitle>
             <Button
               variant="ghost"
@@ -45,7 +52,7 @@ export function GiftViewDialog({ items, open, onOpenChange, onItemClick, disable
             <>
               <div className="text-center space-y-2">
                 <p className="text-lg text-muted-foreground">
-                  ✨ Uma coleção especial de {items.length} desejos
+                  âœ¨ Uma coleÃ§Ã£o especial de {items.length} desejos
                 </p>
                 <div className="flex justify-center gap-2">
                   {Array.from({ length: 5 }).map((_, i) => (
@@ -62,12 +69,18 @@ export function GiftViewDialog({ items, open, onOpenChange, onItemClick, disable
                      !disableAnimations ? 'hover:scale-105 animate-float' : ''
                    }`}
                    onClick={() => {
-                     // Open external link in new tab if it exists
-                     if (item.external_link) {
-                       window.open(item.external_link, '_blank', 'noopener,noreferrer');
+                     // Handle gift logic
+                     if (onGiftItem) {
+                       setSelectedItem(item);
+                       setShowGiftConfirmation(true);
+                     } else {
+                       // Open external link in new tab if it exists
+                       if (item.external_link) {
+                         window.open(item.external_link, '_blank', 'noopener,noreferrer');
+                       }
+                       onItemClick?.(item);
                      }
-                     onItemClick?.(item);
-                   }}
+                   }}}
                    style={!disableAnimations ? { animationDelay: `${Math.random() * 2}s` } : {}}
                  >
                     <CardContent className="p-4">
@@ -103,7 +116,7 @@ export function GiftViewDialog({ items, open, onOpenChange, onItemClick, disable
                           <div className="flex items-center justify-center">
                             <div className="bg-gradient-to-r from-primary/20 to-accent/20 backdrop-blur-sm rounded-full px-3 py-1 border border-primary/30">
                               <p className="text-xs font-semibold text-primary animate-pulse">
-                                💰 {item.credits} créditos
+                                ðŸ’° {item.credits} crÃ©ditos
                               </p>
                             </div>
                           </div>
@@ -131,16 +144,42 @@ export function GiftViewDialog({ items, open, onOpenChange, onItemClick, disable
               
               <div className="space-y-3">
                 <h3 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                  ✨ Nenhum presente ainda
+                  âœ¨ Nenhum presente ainda
                 </h3>
                 <p className="text-muted-foreground text-lg max-w-md mx-auto">
-                  Quando alguém adicionar itens à wishlist, eles aparecerão aqui como uma galeria especial! 🎁
+                  Quando alguÃ©m adicionar itens Ã  wishlist, eles aparecerÃ£o aqui como uma galeria especial! ðŸŽ
                 </p>
               </div>
             </div>
           )}
         </div>
       </DialogContent>
+      
+      {/* Gift Confirmation Dialog */}
+      <GiftConfirmationDialog
+        open={showGiftConfirmation}
+        onOpenChange={setShowGiftConfirmation}
+        item={selectedItem}
+        userCredits={userCredits}
+        isLoggedIn={isLoggedIn}
+        onConfirm={() => {
+          if (selectedItem && onGiftItem) {
+            onGiftItem(selectedItem);
+          }
+          setShowGiftConfirmation(false);
+          setSelectedItem(null);
+        }}
+        onAddCredits={() => {
+          onAddCredits?.();
+          setShowGiftConfirmation(false);
+        }}
+      />
     </Dialog>
   );
 }
+
+
+
+
+
+
