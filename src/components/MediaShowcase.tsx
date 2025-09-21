@@ -31,6 +31,9 @@ import { GetCreditsNotification } from "./GetCreditsNotification";
 import { GiftViewDialog } from "./GiftViewDialog";
 import { useWishlist } from "@/hooks/useWishlist";
 import { useCreatorWishlist } from "@/hooks/useCreatorWishlist";
+import { useUserCredits } from "@/hooks/useUserCredits";
+import { WishlistItem } from "@/hooks/useWishlist";
+import { ChatOverlayButton } from "./ChatOverlayButton";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useFollowers } from "@/hooks/useFollowers";
@@ -743,7 +746,7 @@ export const MediaShowcase = React.memo(({
       if (credits < item.credits) {
         toast({
           title: 'Créditos insuficientes',
-          description: Você precisa de  créditos a mais,
+          description: `Você precisa de ${item.credits - credits} créditos a mais`,
           variant: 'destructive'
         });
         return;
@@ -1544,6 +1547,11 @@ export const MediaShowcase = React.memo(({
 
       {/* Carregador de curtidas em tempo real */}
       <MediaLikesLoader mediaItems={mediaItems} />
+      
+      {/* Chat Overlay Button */}
+      <ChatOverlayButton 
+        onToggle={(isOpen) => setShowChatOverlay(isOpen)}
+      />
     </div>;
 });
 
