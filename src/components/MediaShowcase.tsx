@@ -47,6 +47,7 @@ import { useMediaLikes } from "@/hooks/useMediaLikes";
 import { MediaLikesLoader } from "./MediaLikesLoader";
 import { MediaLikesCount } from "./MediaLikesCount";
 import { useTotalLikes } from "@/hooks/useTotalLikes";
+import { useOptimizedAuth } from "@/hooks/useOptimizedAuth";
 interface MediaItem {
   id: string;
   type: 'image' | 'video';
@@ -196,7 +197,11 @@ export const MediaShowcase = React.memo(({
   const [showPremiumDialog, setShowPremiumDialog] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [followingDialogOpen, setFollowingDialogOpen] = useState(false);
+  const [showChatOverlay, setShowChatOverlay] = useState(false);
+  const [showAddCreditsDialog, setShowAddCreditsDialog] = useState(false);
   const mediaLikesTotal = useTotalLikes(mediaItems);
+  const { user } = useOptimizedAuth();
+  const isLoggedIn = !!user;
   const {
     timers,
     addTimer,
